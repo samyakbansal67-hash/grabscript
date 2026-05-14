@@ -58,6 +58,18 @@ function formatCount(n) {
   return String(n);
 }
 
+function decodeHtml(str) {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
 /* ── health check ── */
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
@@ -146,7 +158,7 @@ app.post('/api/transcript', async (req, res) => {
       if (typeof cap === 'string') return { t: '00:00', text: cap };
       return {
         t: formatTime(cap.start ?? cap.offset ?? 0),
-        text: (cap.text || cap.content || '').trim(),
+        text: decodeHtml((cap.text || cap.content || '').trim()),
       };
     }).filter(c => c.text);
 
