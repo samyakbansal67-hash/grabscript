@@ -1,0 +1,17 @@
+# Environment — NEVER commit real tokens
+.env
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Design source / build artifacts (not needed in production)
+design_bundle/
+design_extracted.txt

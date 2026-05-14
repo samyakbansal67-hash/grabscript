@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Scribely — Transcript Generator</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Instrument Serif"', 'serif'],
+          sans: ['"Geist"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          ink: { 900: '#1a1530', 700: '#2d2654', 500: '#5a527e', 300: '#9a93b8' },
+          cream: '#fbf8f4',
+          paper: '#f6f1ea',
+          indigo: { soft: '#7b6cf2' },
+          violet: { soft: '#a17af0' },
+          sky: { soft: '#7cb8ff' },
+          blush: '#ffb3c8',
+          peach: '#ffd6b3',
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  html, body { background: #fbf8f4; }
+  body { font-family: 'Geist', system-ui, sans-serif; color: #1a1530; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #b6a8ff, #ffb3c8); border-radius: 999px; border: 2px solid #fbf8f4; }
+  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #7b6cf2, #ff8aaa); }
+
+  .grad-text {
+    background: linear-gradient(100deg, #1a1530 0%, #6a4bd6 35%, #c66dd6 60%, #ff9ab0 80%, #1a1530 100%);
+    background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: grad-shift 9s ease-in-out infinite;
+  }
+  @keyframes grad-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+  .grid-dots { background-image: radial-gradient(circle, rgba(26,21,48,0.10) 1px, transparent 1px); background-size: 28px 28px; }
+
+  .noise { position: absolute; inset: 0; pointer-events: none; opacity: 0.4; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10  0 0 0 0 0.08  0 0 0 0 0.16  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+  .shine::before { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); transform: translateX(-120%); transition: transform 0.9s ease; }
+  .shine:hover::before { transform: translateX(120%); }
+
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .anim-border-frame { position: relative; border-radius: 28px; background: linear-gradient(#ffffff, #ffffff) padding-box; }
+  .anim-border-frame::before { content: ''; position: absolute; inset: -2px; border-radius: 30px; background: conic-gradient(from 0deg, #7b6cf2, #a17af0, #ffb3c8, #7cb8ff, #7b6cf2); z-index: -1; animation: spin-slow 8s linear infinite; filter: blur(0.5px); }
+
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  .shimmer { background: linear-gradient(90deg, #efe9df 0%, #f9f3ea 40%, #efe9df 80%); background-size: 800px 100%; animation: shimmer 1.6s linear infinite; }
+
+  @keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 0.9; } 80%, 100% { transform: scale(2.2); opacity: 0; } }
+  .pulse-ring::after { content: ''; position: absolute; inset: 0; border-radius: 999px; background: currentColor; animation: pulse-ring 1.6s cubic-bezier(0.22,1,0.36,1) infinite; }
+
+  .ul-draw { position: relative; }
+  .ul-draw::after { content: ''; position: absolute; left: 0; bottom: -3px; height: 2px; width: 100%; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform 0.5s cubic-bezier(0.7,0,0.3,1); }
+  .ul-draw:hover::after { transform: scaleX(1); transform-origin: left; }
+
+  ::selection { background: #ffd1de; color: #1a1530; }
+
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-track { animation: marquee 40s linear infinite; }
+
+  .glass { background: rgba(255,255,255,0.55); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid rgba(255,255,255,0.7); }
+
+  .cursor-blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .caret-down { animation: caret 1.8s ease-in-out infinite; }
+  @keyframes caret { 0%, 100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(6px); opacity: 1; } }
+
+  .will-anim { will-change: transform, opacity; }
+
+  /* error shake */
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .shake { animation: shake 0.4s ease; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/framer-motion@11.3.19/dist/framer-motion.js"></script>
+
+<!-- ── Icons ── -->
+<script type="text/babel">
+const Ico = ({ d, size = 20, stroke = 2, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" {...rest}>{d}</svg>
+);
+const IconPlay      = (p) => <Ico {...p} d={<polygon points="6 4 20 12 6 20 6 4" />} />;
+const IconLink      = (p) => <Ico {...p} d={<><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" /><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></>} />;
+const IconPaste     = (p) => <Ico {...p} d={<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /></>} />;
+const IconSpark     = (p) => <Ico {...p} d={<><path d="M12 3v4"/><path d="M12 17v4"/><path d="M5 12H1"/><path d="M23 12h-4"/><path d="M19 5l-3 3"/><path d="M8 16l-3 3"/><path d="M19 19l-3-3"/><path d="M8 8L5 5"/></>} />;
+const IconArrowRight= (p) => <Ico {...p} d={<><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></>} />;
+const IconCopy      = (p) => <Ico {...p} d={<><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>} />;
+const IconDownload  = (p) => <Ico {...p} d={<><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></>} />;
+const IconSearch    = (p) => <Ico {...p} d={<><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></>} />;
+const IconCheck     = (p) => <Ico {...p} d={<path d="M4 12l5 5L20 6" />} />;
+const IconClock     = (p) => <Ico {...p} d={<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>} />;
+const IconHash      = (p) => <Ico {...p} d={<><path d="M4 9h16"/><path d="M4 15h16"/><path d="M10 3 8 21"/><path d="M16 3l-2 18"/></>} />;
+const IconBolt      = (p) => <Ico {...p} d={<polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2" />} />;
+const IconType      = (p) => <Ico {...p} d={<><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></>} />;
+const IconGift      = (p) => <Ico {...p} d={<><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5" rx="1"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></>} />;
+const IconLayers    = (p) => <Ico {...p} d={<><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>} />;
+const IconWand      = (p) => <Ico {...p} d={<><path d="M3 21l9-9"/><path d="M14 3l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"/><path d="M19 12l.6 1.6L21 14l-1.4.4L19 16l-.6-1.6L17 14l1.4-.4L19 12z"/></>} />;
+const IconGlobe     = (p) => <Ico {...p} d={<><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></>} />;
+const IconX         = (p) => <Ico {...p} d={<><path d="M6 6l12 12"/><path d="M18 6L6 18"/></>} />;
+const IconTw        = (p) => <Ico {...p} d={<><path d="M4 4l7.5 10L4 20"/><path d="M20 4l-7.5 10L20 20"/></>} />;
+const IconGh        = (p) => <Ico {...p} d={<><path d="M9 19c-4 1.5-4-2.5-6-3"/><path d="M15 22v-3.87a3 3 0 0 0-1-2.13c3 0 6-2 6-5.5a4.5 4.5 0 0 0-.91-2.93 4.18 4.18 0 0 0-.09-3S17.7 4 15 5.7a13 13 0 0 0-6 0C6.3 4 5 4.57 5 4.57a4.18 4.18 0 0 0-.09 3 4.5 4.5 0 0 0-.91 2.93C4 13.9 7 16 10 16a3 3 0 0 0-1 2.12V22"/></>} />;
+const IconYt        = (p) => <Ico {...p} d={<><rect x="2" y="6" width="20" height="12" rx="3"/><polygon points="10 9 16 12 10 15 10 9"/></>} />;
+const IconWaveform  = (p) => <Ico {...p} d={<><path d="M3 12h2"/><path d="M7 8v8"/><path d="M11 5v14"/><path d="M15 9v6"/><path d="M19 11v2"/></>} />;
+const IconAlert     = (p) => <Ico {...p} d={<><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></>} />;
+
+Object.assign(window, {
+  IconPlay,IconLink,IconPaste,IconSpark,IconArrowRight,IconCopy,IconDownload,
+  IconSearch,IconCheck,IconClock,IconHash,IconBolt,IconType,IconGift,
+  IconLayers,IconWand,IconGlobe,IconX,IconTw,IconGh,IconYt,IconWaveform,IconAlert,
+});
+</script>
+
+<!-- ── Static data ── -->
+<script type="text/babel">
+const FEATURES = [
+  { icon: 'IconBolt',   title: 'Instant results',   desc: 'From paste to transcript in under ten seconds for most videos.',  tint: 'from-violet-200 to-indigo-200', accent: '#7b6cf2' },
+  { icon: 'IconClock',  title: 'Smart timestamps',  desc: 'Aligned to natural pauses, not arbitrary 5-second chunks.',        tint: 'from-sky-200 to-violet-200',    accent: '#7cb8ff' },
+  { icon: 'IconCopy',   title: 'Copy & download',   desc: 'One tap to clipboard. One tap to save as a .txt file.',            tint: 'from-pink-200 to-rose-200',     accent: '#ff8aaa' },
+  { icon: 'IconLayers', title: 'Clean formatting',  desc: 'Paragraphs, punctuation, line breaks — handled automatically.',    tint: 'from-amber-100 to-pink-200',    accent: '#ffb18a' },
+  { icon: 'IconGlobe',  title: 'Auto language',     desc: 'Language is auto-detected from the video — no selection needed.',  tint: 'from-emerald-100 to-sky-200',   accent: '#7fd3a8' },
+  { icon: 'IconGift',   title: 'Free, forever',     desc: 'No login. No paywall. No watermark. No catch.',                    tint: 'from-fuchsia-200 to-violet-200',accent: '#c66dd6' },
+];
+
+const STEPS = [
+  { n: '01', title: 'Paste a link',        desc: 'Drop in any public YouTube URL — long-form, shorts, livestreams.', icon: 'IconPaste' },
+  { n: '02', title: 'We fetch captions',   desc: 'Our server reads the YouTube caption track in your chosen language.', icon: 'IconWaveform' },
+  { n: '03', title: 'Copy or download',    desc: 'Take it anywhere — Notion, Docs, your editor, your inbox.',         icon: 'IconDownload' },
+];
+
+const TICKER = [
+  'powered by Apify',
+  'English & Hindi',
+  'with timestamps',
+  'no signup required',
+  'free forever',
+  'open source ✶',
+];
+
+Object.assign(window, { FEATURES, STEPS, TICKER });
+</script>
+
+<!-- ── Sections (hero, card, backdrop, nav) ── -->
+<script type="text/babel">
+const { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } = window.Motion;
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* Animated backdrop */
+function AnimatedBackdrop() {
+  const blobs = [
+    { c1:'#b6a8ff',c2:'#7b6cf2', x:'8%',  y:'12%', size:520, dur:22, delay:0  },
+    { c1:'#ffd1de',c2:'#ff8aaa', x:'78%', y:'6%',  size:460, dur:26, delay:3  },
+    { c1:'#bfe0ff',c2:'#7cb8ff', x:'70%', y:'70%', size:600, dur:30, delay:6  },
+    { c1:'#ffe4c8',c2:'#ffbf94', x:'4%',  y:'78%', size:420, dur:24, delay:9  },
+  ];
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-cream via-paper to-cream" />
+      <div className="absolute inset-0 grid-dots opacity-50" />
+      {blobs.map((b,i) => (
+        <motion.div key={i} className="absolute rounded-full"
+          style={{ left:b.x, top:b.y, width:b.size, height:b.size, background:`radial-gradient(circle at 30% 30%, ${b.c1}, ${b.c2} 60%, transparent 70%)`, filter:'blur(60px)', opacity:0.55 }}
+          animate={{ x:[0,40*(i%2?1:-1),-20,0], y:[0,-30,20,0], scale:[1,1.08,0.96,1] }}
+          transition={{ duration:b.dur, repeat:Infinity, ease:'easeInOut', delay:b.delay }}
+        />
+      ))}
+      <div className="noise" />
+    </div>
+  );
+}
+
+/* Top nav */
+function TopNav() {
+  return (
+    <motion.header initial={{y:-30,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:0.8,ease:[0.22,1,0.36,1]}}
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(1180px,calc(100%-32px))]">
+      <div className="glass rounded-full px-4 py-2.5 flex items-center justify-between shadow-[0_8px_30px_-12px_rgba(60,40,120,0.18)]">
+        <a href="#" className="flex items-center gap-2.5">
+          <motion.div whileHover={{rotate:12,scale:1.06}} transition={{type:'spring',stiffness:300}}
+            className="relative h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-soft via-violet-soft to-blush grid place-items-center shadow-lg">
+            <IconWaveform size={16} stroke={2.4} className="text-white" />
+            <motion.span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-400"
+              animate={{scale:[1,1.4,1],opacity:[1,0.5,1]}} transition={{duration:1.8,repeat:Infinity}} />
+          </motion.div>
+          <span className="font-display text-[22px] tracking-tight italic">Scribely</span>
+        </a>
+        <nav className="hidden md:flex items-center gap-7 text-sm text-ink-700">
+          {['Features','How it works'].map(it=>(
+            <a key={it} href={`#${it.toLowerCase().replace(/ /g,'-')}`} className="ul-draw">{it}</a>
+          ))}
+        </nav>
+        <motion.button whileHover={{y:-1}} whileTap={{scale:0.97}}
+          className="relative overflow-hidden shine rounded-full bg-ink-900 text-cream text-sm font-medium pl-4 pr-3 py-2 flex items-center gap-1.5"
+          onClick={()=>document.getElementById('transcript-card')?.scrollIntoView({behavior:'smooth',block:'center'})}>
+          <span className="relative z-10">Try it free</span>
+          <IconArrowRight size={14} className="relative z-10" />
+        </motion.button>
+      </div>
+    </motion.header>
+  );
+}
+
+/* Hero */
+function Hero({ onJump }) {
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target:heroRef, offset:['start start','end start'] });
+  const parY = useTransform(scrollYProgress,[0,1],[0,-80]);
+  const parO = useTransform(scrollYProgress,[0,0.8],[1,0]);
+
+  return (
+    <section ref={heroRef} className="relative pt-36 pb-12 md:pt-44 md:pb-20">
+      <motion.div style={{y:parY,opacity:parO}} className="max-w-[1180px] mx-auto px-6 text-center will-anim">
+        <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.2,duration:0.8}}
+          className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-ink-700">
+          <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 text-emerald-400 pulse-ring" />
+          <span className="font-medium">Auto language detection</span>
+          <span className="text-ink-300">·</span>
+          <span className="text-ink-500">v2.5</span>
+        </motion.div>
+
+        <h1 className="font-display mt-7 leading-[0.95] tracking-[-0.02em]" style={{fontSize:'clamp(54px,11.5vw,112px)'}}>
+          <StaggerLine delay={0.35} text="YouTube" />
+          <span className="block overflow-hidden leading-[1.05] pb-2">
+            <motion.span initial={{y:'110%',opacity:0}} animate={{y:0,opacity:1}} transition={{delay:0.55,duration:1,ease:[0.22,1,0.36,1]}}
+              className="inline-block grad-text italic">Transcript</motion.span>
+          </span>
+          <span className="inline-flex items-baseline">
+            <StaggerLine delay={0.85} text="Generator" />
+            <motion.span initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} transition={{delay:1.2,type:'spring',stiffness:220}}
+              className="text-blush">.</motion.span>
+          </span>
+        </h1>
+
+        <motion.p initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{delay:1.05,duration:0.8}}
+          className="mx-auto mt-7 max-w-[560px] text-[17px] md:text-[19px] leading-[1.5] text-ink-500">
+          Generate clean, timestamped transcripts from any YouTube video — language is auto-detected instantly.
+        </motion.p>
+
+        <motion.div initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{delay:1.2,duration:0.7}}
+          className="mt-10 flex items-center justify-center gap-3">
+          <motion.button onClick={onJump} whileHover={{y:-2}} whileTap={{scale:0.97}}
+            className="relative overflow-hidden shine group rounded-full bg-ink-900 text-cream pl-6 pr-5 py-3.5 text-[15px] font-medium flex items-center gap-2 shadow-[0_18px_40px_-12px_rgba(40,20,80,0.45)]">
+            <span className="relative z-10">Generate a transcript</span>
+            <span className="relative z-10 grid place-items-center h-7 w-7 rounded-full bg-cream/15">
+              <IconArrowRight size={14} />
+            </span>
+          </motion.button>
+          <motion.a href="#how-it-works" whileHover={{y:-2}}
+            className="rounded-full bg-white/60 backdrop-blur border border-white/80 text-ink-700 pl-5 pr-5 py-3.5 text-[15px] font-medium flex items-center gap-2">
+            <IconPlay size={14} stroke={2.4} />
+            See how it works
+          </motion.a>
+        </motion.div>
+
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.6,duration:1}}
+          className="relative mt-2 flex items-center justify-center gap-2 text-ink-500 text-sm">
+          <span className="font-display italic text-[18px]">free, forever</span>
+          <svg width="64" height="36" viewBox="0 0 64 36" fill="none" className="text-ink-300">
+            <motion.path initial={{pathLength:0}} animate={{pathLength:1}} transition={{delay:1.7,duration:1.2,ease:'easeInOut'}}
+              d="M2 4 C 20 30, 40 30, 58 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+            <motion.path initial={{pathLength:0}} animate={{pathLength:1}} transition={{delay:2.6,duration:0.4}}
+              d="M58 14 L 52 12 M58 14 L 56 20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          </svg>
+        </motion.div>
+
+        <FloatingChips />
+
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:2,duration:0.8}}
+          className="mt-14 inline-flex flex-col items-center text-ink-300 text-xs gap-1">
+          <span className="uppercase tracking-[0.2em]">scroll</span>
+          <span className="caret-down">↓</span>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+function StaggerLine({ text, delay=0 }) {
+  return (
+    <span className="inline-block overflow-hidden align-baseline leading-[1.05] pb-1">
+      {String(text).split('').map((ch,i) => (
+        <motion.span key={i} initial={{y:'110%',opacity:0,rotate:6}} animate={{y:0,opacity:1,rotate:0}}
+          transition={{duration:0.8,ease:[0.22,1,0.36,1],delay:delay+i*0.035}}
+          className="inline-block" style={{whiteSpace:'pre'}}>
+          {ch===' '?' ':ch}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
+function FloatingChips() {
+  const chips = [
+    { txt:'00:00',                        x:'6%',  y:'10%', rot:-8, delay:0,   big:false },
+    { txt:'auto-detect',                   x:'88%', y:'12%', rot:6,  delay:0.4, big:false },
+    { txt:'✶ with timestamps',            x:'4%',  y:'70%', rot:4,  delay:0.8, big:false },
+    { txt:'"pleasant is underrated."',    x:'86%', y:'64%', rot:-6, delay:1.2, big:true  },
+  ];
+  return (
+    <>
+      {chips.map((c,i)=>(
+        <motion.div key={i} initial={{opacity:0,scale:0.6,rotate:0}} animate={{opacity:1,scale:1,rotate:c.rot}}
+          transition={{delay:1.2+c.delay,duration:0.9,ease:[0.22,1,0.36,1]}}
+          className={`hidden md:block absolute select-none ${c.big?'font-display italic text-[20px] text-ink-700':'font-mono text-[12px] text-ink-500'} glass px-3 py-1.5 rounded-full shadow-sm`}
+          style={{left:c.x,top:c.y}}>
+          <motion.span className="block" animate={{y:[0,-6,0]}} transition={{duration:5+i,repeat:Infinity,ease:'easeInOut'}}>
+            {c.txt}
+          </motion.span>
+        </motion.div>
+      ))}
+    </>
+  );
+}
+
+/* ── Transcript card ── */
+function TranscriptCard({ phase,setPhase,url,setUrl,results,setResults,anchorRef }) {
+  const inputRef = useRef(null);
+  const [focused, setFocused] = useState(false);
+  const [pasted,  setPasted]  = useState(false);
+  const [timestamps, setTs]   = useState(true);
+  const [error,   setError]   = useState('');
+  const btnRef = useRef(null);
+
+  const ripple = (e) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const span = document.createElement('span');
+    const size = Math.max(rect.width, rect.height);
+    span.style.cssText = `position:absolute;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;width:${size}px;height:${size}px;background:rgba(255,255,255,0.35);border-radius:999px;transform:scale(0);transition:transform 700ms ease,opacity 700ms ease;pointer-events:none;`;
+    btn.appendChild(span);
+    requestAnimationFrame(()=>{ span.style.transform='scale(2.2)'; span.style.opacity='0'; });
+    setTimeout(()=>span.remove(), 800);
+  };
+
+  const onPaste = async () => {
+    try { const t = await navigator.clipboard.readText(); if(t) setUrl(t); }
+    catch { setUrl('https://youtu.be/dQw4w9WgXcQ'); }
+    setPasted(true); setTimeout(()=>setPasted(false), 1200);
+    inputRef.current?.focus();
+  };
+
+  const generate = async (e) => {
+    ripple(e);
+    setError('');
+    const trimmed = url.trim();
+    if (!trimmed) { setError('Please paste a YouTube URL first.'); return; }
+    setPhase('loading');
+    try {
+      const res = await fetch('/api/transcript', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: trimmed, timestamps }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(json.error || 'Something went wrong. Please try again.');
+        setPhase('idle');
+        return;
+      }
+      setResults({ data: json.transcript, meta: json.meta, when: Date.now() });
+      setPhase('done');
+    } catch(err) {
+      setError('Network error — is the server running? (npm start)');
+      setPhase('idle');
+    }
+  };
+
+  return (
+    <section id="transcript-card" ref={anchorRef} className="relative px-6 -mt-2">
+      <motion.div initial={{opacity:0,y:40,scale:0.96}} whileInView={{opacity:1,y:0,scale:1}}
+        viewport={{once:true,amount:0.3}} transition={{duration:1,ease:[0.22,1,0.36,1]}}
+        className="max-w-[920px] mx-auto">
+        <motion.div animate={{y:[0,-6,0]}} transition={{duration:6,repeat:Infinity,ease:'easeInOut'}}
+          className="anim-border-frame p-1.5 shadow-[0_40px_80px_-30px_rgba(60,40,120,0.35)]">
+          <div className="relative rounded-[24px] bg-white/90 backdrop-blur p-6 md:p-9 overflow-hidden">
+            <Corners />
+
+            {/* window chrome */}
+            <div className="flex items-center justify-between text-xs text-ink-500">
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-rose-300" />
+                <span className="h-2 w-2 rounded-full bg-amber-300" />
+                <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                <span className="ml-2 font-mono tracking-wider">scribely / new transcript</span>
+              </div>
+              <span className="font-mono opacity-70">⌘ + ⏎ to generate</span>
+            </div>
+
+            {/* URL input */}
+            <div className="mt-6">
+              <label className="block text-[13px] text-ink-500 mb-2 font-medium">Paste a YouTube link</label>
+              <motion.div
+                animate={focused ? { boxShadow:'0 0 0 6px rgba(123,108,242,0.12), 0 20px 50px -20px rgba(80,60,180,0.35)' } : { boxShadow:'0 1px 0 rgba(0,0,0,0.04)' }}
+                transition={{duration:0.4}}
+                className="relative rounded-2xl bg-cream border border-paper px-4 py-3.5 flex items-center gap-3">
+                <IconLink size={18} className="text-ink-300 shrink-0" />
+                <input ref={inputRef} value={url} onChange={e=>setUrl(e.target.value)}
+                  onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
+                  onKeyDown={e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') btnRef.current?.click(); }}
+                  placeholder="youtube.com/watch?v=... or youtu.be/..."
+                  className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-ink-300" />
+                <AnimatePresence>
+                  {url && (
+                    <motion.button initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.6}}
+                      onClick={()=>{setUrl('');setError('');}} className="text-ink-300 hover:text-ink-700" aria-label="Clear">
+                      <IconX size={16} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+                <motion.button whileHover={{y:-1}} whileTap={{scale:0.96}} onClick={onPaste}
+                  className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-paper text-ink-700 flex items-center gap-1.5">
+                  <AnimatePresence mode="wait">
+                    {pasted
+                      ? <motion.span key="ok" initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-4}} className="flex items-center gap-1"><IconCheck size={12} stroke={3}/> pasted</motion.span>
+                      : <motion.span key="p"  initial={{opacity:0,y:4}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-4}} className="flex items-center gap-1"><IconPaste size={12} stroke={2}/> paste</motion.span>}
+                  </AnimatePresence>
+                </motion.button>
+              </motion.div>
+            </div>
+
+            {/* options row */}
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              {/* timestamp toggle */}
+              <motion.button onClick={()=>setTs(!timestamps)} whileTap={{scale:0.95}}
+                animate={{ backgroundColor:timestamps?'#1a1530':'#ffffff', color:timestamps?'#fbf8f4':'#5a527e', borderColor:timestamps?'#1a1530':'#f0e9df' }}
+                transition={{duration:0.25}} className="rounded-full border px-3 py-1.5 flex items-center gap-1.5 font-medium">
+                <motion.span animate={{scale:timestamps?1:0,opacity:timestamps?1:0}} transition={{duration:0.2}} className="inline-block">
+                  <IconCheck size={11} stroke={3} />
+                </motion.span>
+                with timestamps
+              </motion.button>
+
+              {/* auto-detect badge */}
+              <div className="rounded-full border border-paper px-3 py-1.5 flex items-center gap-1.5 font-medium text-ink-300 bg-white/60 select-none">
+                <IconGlobe size={11} stroke={2} />
+                auto language
+              </div>
+            </div>
+
+            {/* error banner */}
+            <AnimatePresence>
+              {error && (
+                <motion.div initial={{opacity:0,y:-6,height:0}} animate={{opacity:1,y:0,height:'auto'}} exit={{opacity:0,y:-6,height:0}}
+                  transition={{duration:0.3}} className="mt-4 overflow-hidden">
+                  <div className="flex items-start gap-2.5 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-[13px] text-rose-700">
+                    <IconAlert size={15} stroke={2} className="shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* generate button */}
+            <motion.button ref={btnRef} onClick={generate} disabled={phase==='loading'}
+              whileHover={phase!=='loading'?{y:-2}:{}} whileTap={phase!=='loading'?{scale:0.98}:{}}
+              className="relative overflow-hidden shine mt-7 w-full rounded-2xl bg-gradient-to-r from-indigo-soft via-violet-soft to-blush text-white py-4 font-medium text-[15px] flex items-center justify-center gap-2 shadow-[0_22px_44px_-18px_rgba(123,108,242,0.65)] disabled:opacity-70">
+              <AnimatePresence mode="wait">
+                {phase==='loading'
+                  ? <motion.span key="l" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex items-center gap-2">
+                      <Spinner /> Fetching transcript…
+                    </motion.span>
+                  : <motion.span key="g" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="flex items-center gap-2 relative z-10">
+                      <IconSpark size={16} stroke={2.4} /> Generate transcript
+                    </motion.span>}
+              </AnimatePresence>
+            </motion.button>
+
+            <p className="mt-4 text-center text-[12px] text-ink-300">No login required · powered by <span className="font-medium text-ink-500">Apify</span> · karamelo/youtube-transcripts</p>
+
+            <AnimatePresence mode="wait">
+              {phase==='loading' && <LoadingPanel key="ld" />}
+              {phase==='done' && results && <TranscriptOutput key="out" data={results.data} meta={results.meta} />}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        <BelowCardChips />
+      </motion.div>
+    </section>
+  );
+}
+
+function Corners() {
+  const C = ({pos}) => (
+    <div className={`absolute ${pos} text-ink-300 opacity-50`}>
+      <svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" strokeWidth="1.2" fill="none">
+        <path d="M7 0v14M0 7h14" />
+      </svg>
+    </div>
+  );
+  return <><C pos="top-3 left-3"/><C pos="top-3 right-3"/><C pos="bottom-3 left-3"/><C pos="bottom-3 right-3"/></>;
+}
+
+function Spinner() {
+  return <span className="inline-block h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />;
+}
+
+function BelowCardChips() {
+  return (
+    <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-ink-500">
+      {[['✶','no login'],['◐','no watermark'],['✦','auto language'],['◇','export anywhere']].map(([s,t],i)=>(
+        <motion.div key={i} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}}
+          transition={{delay:0.1*i,duration:0.6}} className="flex items-center gap-1.5">
+          <span className="text-blush">{s}</span> {t}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+Object.assign(window, { AnimatedBackdrop, TopNav, Hero, StaggerLine, FloatingChips, TranscriptCard, Corners, Spinner, BelowCardChips });
+</script>
+
+<!-- ── Loading + Output + Features + Footer ── -->
+<script type="text/babel">
+const { motion: m2, AnimatePresence: AP2 } = window.Motion;
+const { useState: useS2, useEffect: useE2, useRef: useR2, useMemo: useM2 } = React;
+
+/* Loading panel */
+function LoadingPanel() {
+  const phrases = ['Connecting to Apify','Fetching caption track','Parsing timestamps','Cleaning text','Almost there…'];
+  const [idx, setIdx] = useS2(0);
+  useE2(() => {
+    const id = setInterval(()=>setIdx(i=>(i+1)%phrases.length), 700);
+    return ()=>clearInterval(id);
+  }, []);
+  return (
+    <m2.div initial={{opacity:0,height:0,marginTop:0}} animate={{opacity:1,height:'auto',marginTop:28}}
+      exit={{opacity:0,height:0,marginTop:0}} transition={{duration:0.5,ease:[0.22,1,0.36,1]}} className="overflow-hidden">
+      <div className="rounded-2xl bg-paper/70 p-5 border border-paper">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="grid place-items-center h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-soft to-violet-soft text-white">
+              <IconSpark size={16} stroke={2.4} />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] text-ink-700 font-medium">
+                <AP2 mode="wait">
+                  <m2.span key={idx} initial={{y:10,opacity:0}} animate={{y:0,opacity:1}} exit={{y:-10,opacity:0}} transition={{duration:0.35}} className="inline-block">
+                    {phrases[idx]}
+                  </m2.span>
+                </AP2>
+                <span className="cursor-blink ml-1">▍</span>
+              </div>
+              <div className="text-[11px] text-ink-300 mt-0.5 font-mono">karamelo/youtube-transcripts · Apify</div>
+            </div>
+          </div>
+          <Waveform />
+        </div>
+        <div className="mt-5 h-1 rounded-full bg-paper overflow-hidden">
+          <m2.div initial={{width:'0%'}} animate={{width:'100%'}} transition={{duration:8,ease:[0.4,0,0.2,1]}}
+            className="h-full bg-gradient-to-r from-indigo-soft via-violet-soft to-blush" />
+        </div>
+        <div className="mt-6 space-y-3">
+          {[100,92,78,96,70].map((w,i)=>(
+            <m2.div key={i} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:0.1+i*0.07}} className="flex items-start gap-3">
+              <div className="shimmer h-3 w-12 rounded-md mt-1.5 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="shimmer h-3 rounded-md" style={{width:w+'%'}} />
+                <div className="shimmer h-3 rounded-md" style={{width:(w-14)+'%'}} />
+              </div>
+            </m2.div>
+          ))}
+        </div>
+      </div>
+    </m2.div>
+  );
+}
+
+function Waveform() {
+  return (
+    <div className="flex items-end gap-[3px] h-9">
+      {Array.from({length:18}).map((_,i)=>(
+        <m2.span key={i} className="block w-[3px] rounded-full bg-gradient-to-t from-indigo-soft to-blush"
+          style={{transformOrigin:'bottom',height:'100%'}}
+          animate={{scaleY:[0.2,0.95,0.4,1,0.3]}}
+          transition={{duration:1.1+(i%5)*0.1,repeat:Infinity,ease:'easeInOut',delay:i*0.05}} />
+      ))}
+    </div>
+  );
+}
+
+/* Transcript output */
+function TranscriptOutput({ data, meta }) {
+  const [query,  setQuery]  = useS2('');
+  const [copied, setCopied] = useS2(false);
+
+  const wordCount = useM2(()=>data.reduce((n,b)=>n+b.text.split(/\s+/).length,0),[data]);
+  const filtered  = useM2(()=>{
+    if (!query.trim()) return data;
+    const q = query.toLowerCase();
+    return data.filter(b=>b.text.toLowerCase().includes(q));
+  },[query,data]);
+
+  const onCopy = () => {
+    const txt = data.map(b=>`[${b.t}] ${b.text}`).join('\n\n');
+    try { navigator.clipboard.writeText(txt); } catch {}
+    setCopied(true); setTimeout(()=>setCopied(false), 1600);
+  };
+
+  const onDownload = () => {
+    const txt = data.map(b=>`[${b.t}] ${b.text}`).join('\n\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+    a.download = `transcript-${meta?.videoId||'video'}.txt`;
+    a.click();
+  };
+
+  const title    = meta?.title    || 'YouTube Video';
+  const channel  = meta?.channel  || '';
+  const views    = meta?.views    || '';
+  const duration = meta?.duration || '';
+  const langLabel= meta?.detectedLanguage || 'auto-detected';
+
+  return (
+    <m2.div initial={{opacity:0,height:0,marginTop:0}} animate={{opacity:1,height:'auto',marginTop:28}}
+      exit={{opacity:0,height:0}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="overflow-hidden">
+      <div className="rounded-2xl bg-cream/60 border border-paper">
+        {/* header */}
+        <div className="px-5 pt-5 pb-3 flex flex-wrap gap-4 items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-ink-300">Source</div>
+            <div className="font-display text-[20px] leading-tight mt-1 max-w-[480px] line-clamp-2">{title}</div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] text-ink-500">
+              {channel && <><span className="font-medium">{channel}</span><span>·</span></>}
+              {views   && <><span>{views}</span><span>·</span></>}
+              {duration&& <><span>{duration}</span><span>·</span></>}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-paper font-medium text-ink-700">{langLabel}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Stat icon={<IconType size={12}/>}  label={`${wordCount.toLocaleString()} words`} />
+            {duration && <Stat icon={<IconClock size={12}/>} label={duration} />}
+            <Stat icon={<IconHash size={12}/>}  label={`${data.length} segments`} />
+          </div>
+        </div>
+
+        {/* toolbar */}
+        <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-[200px] flex items-center gap-2 bg-white border border-paper rounded-full px-3.5 py-2">
+            <IconSearch size={14} className="text-ink-300" />
+            <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search inside transcript…"
+              className="bg-transparent outline-none text-sm flex-1 placeholder:text-ink-300" />
+            {query && <span className="text-[11px] text-ink-300 font-mono">{filtered.length} match{filtered.length===1?'':'es'}</span>}
+          </div>
+          <ActionBtn onClick={onCopy}     icon={copied?<IconCheck size={14} stroke={3}/>:<IconCopy size={14}/>}     label={copied?'Copied':'Copy'} hot={copied} />
+          <ActionBtn onClick={onDownload} icon={<IconDownload size={14}/>}                                           label=".txt" />
+        </div>
+
+        {/* transcript scroller */}
+        <div className="relative max-h-[440px] overflow-y-auto px-5 pb-5">
+          <div key={query} className="space-y-2">
+            <AP2>
+              {filtered.map((b,i)=>(
+                <m2.div key={b.t+'-'+i} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
+                  transition={{duration:0.5,delay:Math.min(i,20)*0.025,ease:[0.22,1,0.36,1]}}
+                  whileHover={{x:4}} className="group flex gap-3 p-3 rounded-xl hover:bg-white/70 transition-colors cursor-pointer">
+                  <div className="shrink-0">
+                    <div className="font-mono text-[11px] text-ink-300 group-hover:text-ink-700 transition-colors bg-paper/60 group-hover:bg-cream rounded-md px-2 py-1">
+                      {b.t}
+                    </div>
+                  </div>
+                  <p className="text-[15px] leading-[1.55] text-ink-700"><Highlight text={b.text} q={query}/></p>
+                </m2.div>
+              ))}
+            </AP2>
+            {filtered.length===0 && (
+              <m2.div initial={{opacity:0}} animate={{opacity:1}} className="text-center py-8 text-ink-300 text-sm">
+                <span className="font-display italic text-[18px]">nothing found.</span><br/>try a different query.
+              </m2.div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute left-0 right-0 top-0 h-8 bg-gradient-to-b from-cream/80 to-transparent" />
+          <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-8 bg-gradient-to-t from-cream/80 to-transparent" />
+        </div>
+      </div>
+    </m2.div>
+  );
+}
+
+function Stat({icon,label}) {
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-paper px-2.5 py-1 text-[12px] text-ink-700 font-medium">
+      <span className="text-ink-300">{icon}</span>{label}
+    </div>
+  );
+}
+function ActionBtn({icon,label,onClick,hot}) {
+  return (
+    <m2.button onClick={onClick} whileHover={{y:-1}} whileTap={{scale:0.95}}
+      animate={hot?{backgroundColor:'#1a1530',color:'#fbf8f4'}:{backgroundColor:'#ffffff',color:'#1a1530'}}
+      transition={{duration:0.25}} className="rounded-full border border-paper px-3.5 py-2 text-sm font-medium flex items-center gap-1.5">
+      {icon} {label}
+    </m2.button>
+  );
+}
+function Highlight({text,q}) {
+  if (!q.trim()) return text;
+  const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.split(re).map((p,i)=>
+    re.test(p) ? <mark key={i} className="bg-gradient-to-r from-amber-200 to-blush/80 text-ink-900 rounded px-0.5">{p}</mark> : <span key={i}>{p}</span>
+  );
+}
+
+/* Ticker */
+function Ticker() {
+  const items = [...window.TICKER,...window.TICKER];
+  return (
+    <section className="py-10 overflow-hidden">
+      <div className="flex gap-12 marquee-track whitespace-nowrap">
+        {items.map((it,i)=>(
+          <div key={i} className="flex items-center gap-12 text-ink-500">
+            <span className="font-display italic text-[28px] md:text-[36px]">{it}</span>
+            <span className="text-blush text-2xl">✶</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* Features */
+function Features() {
+  return (
+    <section id="features" className="relative px-6 py-24">
+      <div className="max-w-[1180px] mx-auto">
+        <SectionHeader eyebrow="What's inside"
+          title={<>Quietly, almost <em className="font-display italic">stubbornly</em> good.</>}
+          sub="Six things we got obsessive about so you don't have to think about them." />
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {window.FEATURES.map((f,i)=><FeatureCard key={i} f={f} i={i}/>)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeatureCard({f,i}) {
+  const ref = useR2(null);
+  const [hot, setHot] = useS2(false);
+  const Icon = window[f.icon];
+  const onMove = (e) => {
+    const r = ref.current.getBoundingClientRect();
+    ref.current.style.setProperty('--mx',`${((e.clientX-r.left)/r.width)*100}%`);
+    ref.current.style.setProperty('--my',`${((e.clientY-r.top)/r.height)*100}%`);
+  };
+  return (
+    <m2.div ref={ref} onMouseEnter={()=>setHot(true)} onMouseLeave={()=>setHot(false)} onMouseMove={onMove}
+      initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.3}}
+      transition={{delay:i*0.06,duration:0.7,ease:[0.22,1,0.36,1]}} whileHover={{y:-6}}
+      className="relative rounded-3xl bg-white/80 backdrop-blur border border-paper p-7 overflow-hidden group"
+      style={{'--mx':'50%','--my':'50%'}}>
+      <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{background:`radial-gradient(420px circle at var(--mx) var(--my), ${f.accent}22, transparent 50%)`}} />
+      <div className="absolute top-4 right-5 font-mono text-[11px] text-ink-300">0{i+1}</div>
+      <m2.div animate={hot?{rotate:[0,-8,8,0],y:[-2,-6,-2]}:{rotate:0,y:0}} transition={{duration:1.4,ease:'easeInOut'}}
+        className={`relative inline-grid place-items-center h-14 w-14 rounded-2xl bg-gradient-to-br ${f.tint} shadow-[0_12px_24px_-12px_rgba(80,60,180,0.35)]`}>
+        <Icon size={22} stroke={2} className="text-ink-900" />
+        <m2.span className="absolute -right-1 -top-1 text-blush" animate={{rotate:360}} transition={{duration:12,repeat:Infinity,ease:'linear'}}>✶</m2.span>
+      </m2.div>
+      <h3 className="mt-6 text-[22px] font-display leading-tight">{f.title}</h3>
+      <p className="mt-2 text-[14.5px] leading-[1.55] text-ink-500">{f.desc}</p>
+      <div className="mt-5 flex items-center gap-1.5 text-[13px] text-ink-700">
+        <span className="ul-draw">Learn more</span>
+        <m2.span animate={hot?{x:4}:{x:0}} transition={{type:'spring',stiffness:300}}><IconArrowRight size={14}/></m2.span>
+      </div>
+    </m2.div>
+  );
+}
+
+function SectionHeader({eyebrow,title,sub}) {
+  return (
+    <div className="text-center">
+      <m2.div initial={{opacity:0,y:12}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.6}}
+        className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-ink-500">
+        <span className="h-px w-8 bg-ink-300/60"/>{eyebrow}<span className="h-px w-8 bg-ink-300/60"/>
+      </m2.div>
+      <m2.h2 initial={{opacity:0,y:18}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.7,delay:0.05}}
+        className="font-display mt-5 text-[44px] md:text-[64px] leading-[1] tracking-[-0.02em] max-w-[820px] mx-auto">{title}</m2.h2>
+      {sub && <m2.p initial={{opacity:0,y:14}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.7,delay:0.15}}
+        className="mt-5 max-w-[540px] mx-auto text-ink-500 text-[16.5px] leading-[1.5]">{sub}</m2.p>}
+    </div>
+  );
+}
+
+/* How it works */
+function HowItWorks() {
+  return (
+    <section id="how-it-works" className="relative px-6 py-24">
+      <div className="max-w-[1180px] mx-auto">
+        <SectionHeader eyebrow="How it works"
+          title={<>Three steps. <em className="font-display italic">No menus.</em></>}
+          sub="The whole flow takes less time than it does to read this sentence." />
+        <div className="mt-16 relative">
+          <svg className="hidden lg:block absolute left-0 right-0 top-[68px] mx-auto pointer-events-none"
+            width="100%" height="80" viewBox="0 0 1100 80" preserveAspectRatio="none">
+            <m2.path d="M 100 40 C 280 -10, 460 90, 550 40 S 820 -10, 1000 40"
+              fill="none" stroke="url(#grad)" strokeWidth="1.6" strokeDasharray="2 8"
+              initial={{pathLength:0}} whileInView={{pathLength:1}} viewport={{once:true}} transition={{duration:2,ease:'easeInOut'}} />
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#7b6cf2"/><stop offset="50%" stopColor="#c66dd6"/><stop offset="100%" stopColor="#ff8aaa"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+            {window.STEPS.map((s,i)=><Step key={i} s={s} i={i}/>)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Step({s,i}) {
+  const Icon = window[s.icon];
+  return (
+    <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.4}}
+      transition={{delay:i*0.2,duration:0.8,ease:[0.22,1,0.36,1]}} className="relative text-center">
+      <m2.div animate={{y:[0,-6,0]}} transition={{duration:5+i*0.5,repeat:Infinity,ease:'easeInOut',delay:i*0.3}}
+        className="mx-auto relative grid place-items-center h-[120px] w-[120px] rounded-[36px] bg-white/90 backdrop-blur border border-paper shadow-[0_24px_50px_-20px_rgba(80,60,180,0.3)]">
+        <Icon size={36} stroke={1.8} className="text-ink-900" />
+        <m2.div className="absolute inset-0" animate={{rotate:360}} transition={{duration:9,repeat:Infinity,ease:'linear'}}>
+          <span className="absolute left-1/2 -top-1.5 -translate-x-1/2 h-3 w-3 rounded-full bg-gradient-to-br from-indigo-soft to-blush shadow-md" />
+        </m2.div>
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 font-mono text-[11px] bg-ink-900 text-cream px-2 py-0.5 rounded-full">step {s.n}</div>
+      </m2.div>
+      <h3 className="mt-10 font-display text-[28px] leading-tight">{s.title}</h3>
+      <p className="mt-2 mx-auto max-w-[280px] text-ink-500 text-[15px] leading-[1.55]">{s.desc}</p>
+    </m2.div>
+  );
+}
+
+/* Quote band */
+function QuoteBand() {
+  return (
+    <section className="px-6 py-24">
+      <div className="max-w-[860px] mx-auto text-center relative">
+        <m2.div initial={{opacity:0,scale:0.9}} whileInView={{opacity:1,scale:1}} viewport={{once:true}} transition={{duration:0.7}}
+          className="text-blush text-[80px] font-display leading-none">"</m2.div>
+        <m2.p initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.8,delay:0.1}}
+          className="font-display text-[34px] md:text-[48px] leading-[1.05] tracking-[-0.01em] -mt-8">
+          Honestly the only transcript tool I've kept open in a tab for a whole quarter. It just <em className="italic">works</em>, and it's <em className="italic">kind</em> about it.
+        </m2.p>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-soft via-blush to-peach shadow-md" />
+          <div className="text-left">
+            <div className="text-sm font-medium">Maya Okafor</div>
+            <div className="text-xs text-ink-300">Senior PM · Substrate Studios</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Final CTA */
+function FinalCTA({ onJump }) {
+  return (
+    <section className="px-6 py-16">
+      <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.8}}
+        className="relative max-w-[1100px] mx-auto rounded-[40px] overflow-hidden p-12 md:p-20 text-center"
+        style={{background:'linear-gradient(135deg, #efe7ff 0%, #ffe1ec 50%, #e0eeff 100%)'}}>
+        <m2.div className="absolute -left-20 -top-20 h-72 w-72 rounded-full"
+          style={{background:'radial-gradient(circle, #b6a8ff, transparent 70%)',filter:'blur(40px)'}}
+          animate={{x:[0,30,0],y:[0,20,0]}} transition={{duration:14,repeat:Infinity,ease:'easeInOut'}} />
+        <m2.div className="absolute -right-20 -bottom-20 h-80 w-80 rounded-full"
+          style={{background:'radial-gradient(circle, #ffb3c8, transparent 70%)',filter:'blur(40px)'}}
+          animate={{x:[0,-30,0],y:[0,-20,0]}} transition={{duration:16,repeat:Infinity,ease:'easeInOut'}} />
+        <div className="relative">
+          <h2 className="font-display text-[44px] md:text-[80px] leading-[0.98] tracking-[-0.02em]">
+            Now — try it on <em className="italic">your</em> video.
+          </h2>
+          <p className="mt-5 text-ink-500 text-[17px] max-w-[480px] mx-auto">
+            Paste a link. Choose your language. We'll fetch the captions.
+          </p>
+          <m2.button onClick={onJump} whileHover={{y:-2}} whileTap={{scale:0.97}}
+            className="relative overflow-hidden shine mt-9 inline-flex items-center gap-2 rounded-full bg-ink-900 text-cream pl-6 pr-5 py-4 font-medium shadow-[0_22px_44px_-18px_rgba(40,20,80,0.55)]">
+            <span className="relative z-10">Generate a transcript</span>
+            <span className="relative z-10 grid place-items-center h-7 w-7 rounded-full bg-cream/15"><IconArrowRight size={14}/></span>
+          </m2.button>
+        </div>
+      </m2.div>
+    </section>
+  );
+}
+
+/* Footer */
+function Footer() {
+  return (
+    <footer className="relative px-6 pt-16 pb-10">
+      <div className="max-w-[1180px] mx-auto">
+        <div className="flex flex-wrap gap-10 justify-between">
+          <div className="max-w-[300px]">
+            <a href="#" className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-soft via-violet-soft to-blush grid place-items-center shadow">
+                <IconWaveform size={18} className="text-white" stroke={2.4} />
+              </div>
+              <span className="font-display text-[26px] italic">Scribely</span>
+            </a>
+            <p className="mt-4 text-sm text-ink-500 leading-[1.55]">A small, opinionated transcript tool. Supports English and Hindi. Powered by Apify.</p>
+          </div>
+          {[
+            { t:'Product', items:['Features','How it works','English','Hindi'] },
+            { t:'Legal',   items:['Privacy','Terms','Cookies','Status'] },
+          ].map(col=>(
+            <div key={col.t}>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-ink-300">{col.t}</div>
+              <ul className="mt-4 space-y-2.5 text-[14.5px] text-ink-700">
+                {col.items.map(it=><li key={it}><a href="#" className="ul-draw">{it}</a></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-14 pt-6 border-t border-paper flex flex-wrap items-center justify-between gap-4">
+          <div className="text-[12.5px] text-ink-500">© {new Date().getFullYear()} Scribely · powered by Apify</div>
+          <div className="flex items-center gap-2">
+            {[IconTw,IconGh,IconYt].map((I,i)=>(
+              <m2.a key={i} href="#" whileHover={{y:-3,scale:1.05}}
+                className="grid place-items-center h-9 w-9 rounded-full bg-white border border-paper text-ink-700 hover:text-ink-900">
+                <I size={14}/>
+              </m2.a>
+            ))}
+          </div>
+        </div>
+        <div className="mt-10 overflow-hidden">
+          <div className="font-display italic leading-[0.85] tracking-[-0.03em] text-center select-none"
+            style={{fontSize:'clamp(80px,22vw,360px)',background:'linear-gradient(180deg,rgba(26,21,48,0.16) 0%,rgba(26,21,48,0) 90%)',WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}}>
+            Scribely
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+Object.assign(window, { LoadingPanel, Waveform, TranscriptOutput, Stat, ActionBtn, Highlight, Ticker, Features, FeatureCard, SectionHeader, HowItWorks, Step, QuoteBand, FinalCTA, Footer });
+</script>
+
+<!-- ── App root ── -->
+<script type="text/babel">
+const { motion: mA, useMotionValue: mvA, useSpring: spA } = window.Motion;
+const { useState: usA, useEffect: ueA, useRef: urA } = React;
+
+function CustomCursor({ mx, my }) {
+  const x = spA(mx,{stiffness:250,damping:30,mass:0.4});
+  const y = spA(my,{stiffness:250,damping:30,mass:0.4});
+  return (
+    <mA.div className="hidden md:block pointer-events-none fixed top-0 left-0 z-[80] mix-blend-multiply"
+      style={{x,y,translateX:'-50%',translateY:'-50%'}}>
+      <div className="h-6 w-6 rounded-full border border-ink-700/60 bg-white/30 backdrop-blur-sm" />
+    </mA.div>
+  );
+}
+
+function App() {
+  const [phase,   setPhase]   = usA('idle');
+  const [url,     setUrl]     = usA('');
+  const [results, setResults] = usA(null);
+  const cardRef = urA(null);
+
+  const mx = mvA(0); const my = mvA(0);
+  const cmx= mvA(0); const cmy= mvA(0);
+
+  ueA(()=>{
+    const onMove = (e) => {
+      mx.set(e.clientX - window.innerWidth/2);
+      my.set(e.clientY - window.innerHeight/2);
+      cmx.set(e.clientX); cmy.set(e.clientY);
+    };
+    window.addEventListener('pointermove', onMove);
+    return ()=>window.removeEventListener('pointermove', onMove);
+  },[]);
+
+  const jumpToCard = ()=>cardRef.current?.scrollIntoView({behavior:'smooth',block:'center'});
+
+  return (
+    <>
+      <AnimatedBackdrop />
+      <CustomCursor mx={cmx} my={cmy} />
+      <TopNav />
+      <main className="relative">
+        <Hero onJump={jumpToCard} />
+        <TranscriptCard phase={phase} setPhase={setPhase} url={url} setUrl={setUrl}
+          results={results} setResults={setResults} anchorRef={cardRef} />
+        <Ticker />
+        <Features />
+        <HowItWorks />
+        <QuoteBand />
+        <FinalCTA onJump={jumpToCard} />
+        <Footer />
+      </main>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>
