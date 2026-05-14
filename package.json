@@ -1,7 +1,7 @@
 {
-  "name": "scribely",
+  "name": "grabscript",
   "version": "1.0.0",
-  "description": "YouTube transcript generator powered by Apify",
+  "description": "GrabScript — Free YouTube transcript generator",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

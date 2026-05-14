@@ -3,7 +3,34 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Scribely — Transcript Generator</title>
+<title>GrabScript — Free YouTube Transcript Generator | Instant Captions & Subtitles</title>
+<meta name="description" content="GrabScript is a free YouTube transcript generator. Instantly extract clean, timestamped transcripts from any YouTube video. No login required. Supports all languages." />
+<meta name="keywords" content="youtube transcript generator, youtube transcript extractor, youtube to text, youtube captions, youtube subtitles, free transcript tool, grabscript" />
+<meta name="author" content="GrabScript" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://grabscript.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="GrabScript — Free YouTube Transcript Generator" />
+<meta property="og:description" content="Instantly extract clean, timestamped transcripts from any YouTube video. No login, no paywall. Free forever." />
+<meta property="og:url" content="https://grabscript.com/" />
+<meta property="og:site_name" content="GrabScript" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="GrabScript — Free YouTube Transcript Generator" />
+<meta name="twitter:description" content="Instantly extract clean, timestamped transcripts from any YouTube video. Free forever." />
+<meta name="theme-color" content="#7b6cf2" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "GrabScript",
+  "url": "https://grabscript.com",
+  "description": "Free YouTube transcript generator. Instantly extract clean, timestamped transcripts from any YouTube video.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": ["YouTube transcript extraction", "Timestamp support", "Auto language detection", "Copy to clipboard", "Download as text file", "YouTube Shorts support"]
+}
+</script>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -154,7 +181,7 @@ const STEPS = [
 ];
 
 const TICKER = [
-  'powered by Apify',
+  'instant transcripts',
   'English & Hindi',
   'with timestamps',
   'no signup required',
@@ -199,23 +226,21 @@ function TopNav() {
   return (
     <motion.header initial={{y:-30,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:0.8,ease:[0.22,1,0.36,1]}}
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(1180px,calc(100%-32px))]">
-      <div className="glass rounded-full px-4 py-2.5 flex items-center justify-between shadow-[0_8px_30px_-12px_rgba(60,40,120,0.18)]">
-        <a href="#" className="flex items-center gap-2.5">
+      <div className="glass rounded-2xl px-5 py-2.5 flex items-center justify-between shadow-[0_8px_30px_-12px_rgba(60,40,120,0.18)]">
+        <a href="/" className="flex items-center gap-2.5 shrink-0">
           <motion.div whileHover={{rotate:12,scale:1.06}} transition={{type:'spring',stiffness:300}}
-            className="relative h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-soft via-violet-soft to-blush grid place-items-center shadow-lg">
-            <IconWaveform size={16} stroke={2.4} className="text-white" />
-            <motion.span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-rose-400"
-              animate={{scale:[1,1.4,1],opacity:[1,0.5,1]}} transition={{duration:1.8,repeat:Infinity}} />
+            className="relative h-9 w-9 shrink-0">
+            <img src="/logo.svg" alt="GrabScript" className="h-full w-full" />
           </motion.div>
-          <span className="font-display text-[22px] tracking-tight italic">Scribely</span>
+          <span className="font-display text-[20px] tracking-tight italic">GrabScript</span>
         </a>
-        <nav className="hidden md:flex items-center gap-7 text-sm text-ink-700">
-          {['Features','How it works'].map(it=>(
-            <a key={it} href={`#${it.toLowerCase().replace(/ /g,'-')}`} className="ul-draw">{it}</a>
+        <nav className="hidden md:flex items-center gap-6 text-[13.5px] text-ink-700 mx-4">
+          {[{l:'Features',h:'#features'},{l:'How it works',h:'#how-it-works'},{l:'About',h:'/about'},{l:'Contact',h:'/contact'}].map(it=>(
+            <a key={it.l} href={it.h} className="ul-draw whitespace-nowrap">{it.l}</a>
           ))}
         </nav>
         <motion.button whileHover={{y:-1}} whileTap={{scale:0.97}}
-          className="relative overflow-hidden shine rounded-full bg-ink-900 text-cream text-sm font-medium pl-4 pr-3 py-2 flex items-center gap-1.5"
+          className="relative overflow-hidden shine rounded-full bg-ink-900 text-cream text-sm font-medium pl-4 pr-3 py-2 flex items-center gap-1.5 shrink-0"
           onClick={()=>document.getElementById('transcript-card')?.scrollIntoView({behavior:'smooth',block:'center'})}>
           <span className="relative z-10">Try it free</span>
           <IconArrowRight size={14} className="relative z-10" />
@@ -406,7 +431,7 @@ function TranscriptCard({ phase,setPhase,url,setUrl,results,setResults,anchorRef
                 <span className="h-2 w-2 rounded-full bg-rose-300" />
                 <span className="h-2 w-2 rounded-full bg-amber-300" />
                 <span className="h-2 w-2 rounded-full bg-emerald-300" />
-                <span className="ml-2 font-mono tracking-wider">scribely / new transcript</span>
+                <span className="ml-2 font-mono tracking-wider">grabscript / new transcript</span>
               </div>
               <span className="font-mono opacity-70">⌘ + ⏎ to generate</span>
             </div>
@@ -490,11 +515,11 @@ function TranscriptCard({ phase,setPhase,url,setUrl,results,setResults,anchorRef
               </AnimatePresence>
             </motion.button>
 
-            <p className="mt-4 text-center text-[12px] text-ink-300">No login required · powered by <span className="font-medium text-ink-500">Apify</span> · karamelo/youtube-transcripts</p>
+            <p className="mt-4 text-center text-[12px] text-ink-300">No login required · no signup · free forever</p>
 
             <AnimatePresence mode="wait">
               {phase==='loading' && <LoadingPanel key="ld" />}
-              {phase==='done' && results && <TranscriptOutput key="out" data={results.data} meta={results.meta} />}
+              {phase==='done' && results && <TranscriptOutput key="out" data={results.data} meta={results.meta} showTimestamps={timestamps} />}
             </AnimatePresence>
           </div>
         </motion.div>
@@ -543,7 +568,7 @@ const { useState: useS2, useEffect: useE2, useRef: useR2, useMemo: useM2 } = Rea
 
 /* Loading panel */
 function LoadingPanel() {
-  const phrases = ['Connecting to Apify','Fetching caption track','Parsing timestamps','Cleaning text','Almost there…'];
+  const phrases = ['Connecting to server','Fetching caption track','Parsing timestamps','Cleaning text','Almost there…'];
   const [idx, setIdx] = useS2(0);
   useE2(() => {
     const id = setInterval(()=>setIdx(i=>(i+1)%phrases.length), 700);
@@ -567,7 +592,7 @@ function LoadingPanel() {
                 </AP2>
                 <span className="cursor-blink ml-1">▍</span>
               </div>
-              <div className="text-[11px] text-ink-300 mt-0.5 font-mono">karamelo/youtube-transcripts · Apify</div>
+              <div className="text-[11px] text-ink-300 mt-0.5 font-mono">grabscript · fetching captions</div>
             </div>
           </div>
           <Waveform />
@@ -606,9 +631,10 @@ function Waveform() {
 }
 
 /* Transcript output */
-function TranscriptOutput({ data, meta }) {
+function TranscriptOutput({ data, meta, showTimestamps }) {
   const [query,  setQuery]  = useS2('');
   const [copied, setCopied] = useS2(false);
+  const [thumbErr, setThumbErr] = useS2(false);
 
   const wordCount = useM2(()=>data.reduce((n,b)=>n+b.text.split(/\s+/).length,0),[data]);
   const filtered  = useM2(()=>{
@@ -617,14 +643,27 @@ function TranscriptOutput({ data, meta }) {
     return data.filter(b=>b.text.toLowerCase().includes(q));
   },[query,data]);
 
+  const buildText = () => showTimestamps
+    ? data.map(b=>`[${b.t}] ${b.text}`).join('\n\n')
+    : data.map(b=>b.text).join('\n\n');
+
   const onCopy = () => {
-    const txt = data.map(b=>`[${b.t}] ${b.text}`).join('\n\n');
-    try { navigator.clipboard.writeText(txt); } catch {}
+    const txt = buildText();
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(txt).catch(fallback);
+    } else { fallback(); }
     setCopied(true); setTimeout(()=>setCopied(false), 1600);
   };
 
   const onDownload = () => {
-    const txt = data.map(b=>`[${b.t}] ${b.text}`).join('\n\n');
+    const txt = buildText();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
     a.download = `transcript-${meta?.videoId||'video'}.txt`;
@@ -636,11 +675,23 @@ function TranscriptOutput({ data, meta }) {
   const views    = meta?.views    || '';
   const duration = meta?.duration || '';
   const langLabel= meta?.detectedLanguage || 'auto-detected';
+  const thumbUrl = meta?.videoId && !thumbErr
+    ? `https://img.youtube.com/vi/${meta.videoId}/hqdefault.jpg`
+    : null;
 
   return (
     <m2.div initial={{opacity:0,height:0,marginTop:0}} animate={{opacity:1,height:'auto',marginTop:28}}
       exit={{opacity:0,height:0}} transition={{duration:0.7,ease:[0.22,1,0.36,1]}} className="overflow-hidden">
       <div className="rounded-2xl bg-cream/60 border border-paper">
+        {/* thumbnail */}
+        {thumbUrl && (
+          <m2.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:0.6,ease:[0.22,1,0.36,1]}}
+            className="relative w-full overflow-hidden rounded-t-2xl" style={{aspectRatio:'16/9',maxHeight:'220px'}}>
+            <img src={thumbUrl} onError={()=>setThumbErr(true)} alt={title}
+              className="w-full h-full object-cover" style={{objectPosition:'center'}} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+          </m2.div>
+        )}
         {/* header */}
         <div className="px-5 pt-5 pb-3 flex flex-wrap gap-4 items-start justify-between">
           <div className="min-w-0 flex-1">
@@ -680,11 +731,13 @@ function TranscriptOutput({ data, meta }) {
                 <m2.div key={b.t+'-'+i} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
                   transition={{duration:0.5,delay:Math.min(i,20)*0.025,ease:[0.22,1,0.36,1]}}
                   whileHover={{x:4}} className="group flex gap-3 p-3 rounded-xl hover:bg-white/70 transition-colors cursor-pointer">
-                  <div className="shrink-0">
-                    <div className="font-mono text-[11px] text-ink-300 group-hover:text-ink-700 transition-colors bg-paper/60 group-hover:bg-cream rounded-md px-2 py-1">
-                      {b.t}
+                  {showTimestamps && (
+                    <div className="shrink-0">
+                      <div className="font-mono text-[11px] text-ink-300 group-hover:text-ink-700 transition-colors bg-paper/60 group-hover:bg-cream rounded-md px-2 py-1">
+                        {b.t}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <p className="text-[15px] leading-[1.55] text-ink-700"><Highlight text={b.text} q={query}/></p>
                 </m2.div>
               ))}
@@ -812,14 +865,14 @@ function SectionHeader({eyebrow,title,sub}) {
 function HowItWorks() {
   return (
     <section id="how-it-works" className="relative px-6 py-24">
-      <div className="max-w-[1180px] mx-auto">
+      <div className="max-w-[960px] mx-auto">
         <SectionHeader eyebrow="How it works"
           title={<>Three steps. <em className="font-display italic">No menus.</em></>}
           sub="The whole flow takes less time than it does to read this sentence." />
         <div className="mt-16 relative">
-          <svg className="hidden lg:block absolute left-0 right-0 top-[68px] mx-auto pointer-events-none"
-            width="100%" height="80" viewBox="0 0 1100 80" preserveAspectRatio="none">
-            <m2.path d="M 100 40 C 280 -10, 460 90, 550 40 S 820 -10, 1000 40"
+          <svg className="hidden md:block absolute left-[10%] right-[10%] top-[68px] pointer-events-none"
+            width="80%" height="80" viewBox="0 0 800 80" preserveAspectRatio="none" style={{margin:'0 auto'}}>
+            <m2.path d="M 50 40 C 180 -10, 320 90, 400 40 S 620 -10, 750 40"
               fill="none" stroke="url(#grad)" strokeWidth="1.6" strokeDasharray="2 8"
               initial={{pathLength:0}} whileInView={{pathLength:1}} viewport={{once:true}} transition={{duration:2,ease:'easeInOut'}} />
             <defs>
@@ -828,7 +881,7 @@ function HowItWorks() {
               </linearGradient>
             </defs>
           </svg>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative max-w-[900px] mx-auto">
             {window.STEPS.map((s,i)=><Step key={i} s={s} i={i}/>)}
           </div>
         </div>
@@ -917,41 +970,36 @@ function Footer() {
       <div className="max-w-[1180px] mx-auto">
         <div className="flex flex-wrap gap-10 justify-between">
           <div className="max-w-[300px]">
-            <a href="#" className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-soft via-violet-soft to-blush grid place-items-center shadow">
-                <IconWaveform size={18} className="text-white" stroke={2.4} />
-              </div>
-              <span className="font-display text-[26px] italic">Scribely</span>
+            <a href="/" className="flex items-center gap-2.5">
+              <img src="/logo.svg" alt="GrabScript" className="h-9 w-9" />
+              <span className="font-display text-[26px] italic">GrabScript</span>
             </a>
-            <p className="mt-4 text-sm text-ink-500 leading-[1.55]">A small, opinionated transcript tool. Supports English and Hindi. Powered by Apify.</p>
+            <p className="mt-4 text-sm text-ink-500 leading-[1.55]">A clean, fast transcript tool. Supports English, Hindi, and more. Free forever.</p>
           </div>
           {[
-            { t:'Product', items:['Features','How it works','English','Hindi'] },
-            { t:'Legal',   items:['Privacy','Terms','Cookies','Status'] },
+            { t:'Product', items:[{l:'Features',h:'#features'},{l:'How it works',h:'#how-it-works'}] },
+            { t:'Company', items:[{l:'About',h:'/about'},{l:'Contact',h:'/contact'}] },
+            { t:'Legal',   items:[{l:'Privacy Policy',h:'/privacy'},{l:'Terms of Service',h:'/terms'}] },
           ].map(col=>(
             <div key={col.t}>
               <div className="text-[11px] uppercase tracking-[0.18em] text-ink-300">{col.t}</div>
               <ul className="mt-4 space-y-2.5 text-[14.5px] text-ink-700">
-                {col.items.map(it=><li key={it}><a href="#" className="ul-draw">{it}</a></li>)}
+                {col.items.map(it=><li key={it.l}><a href={it.h} className="ul-draw">{it.l}</a></li>)}
               </ul>
             </div>
           ))}
         </div>
         <div className="mt-14 pt-6 border-t border-paper flex flex-wrap items-center justify-between gap-4">
-          <div className="text-[12.5px] text-ink-500">© {new Date().getFullYear()} Scribely · powered by Apify</div>
-          <div className="flex items-center gap-2">
-            {[IconTw,IconGh,IconYt].map((I,i)=>(
-              <m2.a key={i} href="#" whileHover={{y:-3,scale:1.05}}
-                className="grid place-items-center h-9 w-9 rounded-full bg-white border border-paper text-ink-700 hover:text-ink-900">
-                <I size={14}/>
-              </m2.a>
-            ))}
+          <div className="text-[12.5px] text-ink-500">© {new Date().getFullYear()} GrabScript · free forever</div>
+          <div className="flex items-center gap-4 text-[12.5px] text-ink-500">
+            <a href="/privacy" className="ul-draw">Privacy</a>
+            <a href="/terms" className="ul-draw">Terms</a>
           </div>
         </div>
         <div className="mt-10 overflow-hidden">
           <div className="font-display italic leading-[0.85] tracking-[-0.03em] text-center select-none"
             style={{fontSize:'clamp(80px,22vw,360px)',background:'linear-gradient(180deg,rgba(26,21,48,0.16) 0%,rgba(26,21,48,0) 90%)',WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}}>
-            Scribely
+            GrabScript
           </div>
         </div>
       </div>

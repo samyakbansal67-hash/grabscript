@@ -7,6 +7,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 /* ── middleware ── */
 app.use(express.json({ limit: '16kb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 
 /* ── simple rate limiter (no extra deps) ── */
@@ -14,8 +15,8 @@ const hits = new Map();
 app.use('/api/', (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
-  const window = 60_000; // 1 minute
-  const limit = 10;      // 10 requests per minute per IP
+  const window = 60_000;
+  const limit = 10;
 
   const entry = hits.get(ip) || { count: 0, start: now };
   if (now - entry.start > window) { entry.count = 0; entry.start = now; }
@@ -57,8 +58,34 @@ function formatCount(n) {
   return String(n);
 }
 
-/* ── health check (Hostinger / uptime monitors use this) ── */
+/* ── health check ── */
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }));
+
+/* ── static pages ── */
+const pages = ['about', 'contact', 'privacy', 'terms', 'faq', 'cookies', 'disclaimer'];
+pages.forEach(page => {
+  app.get(`/${page}`, (_req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', `${page}.html`));
+  });
+});
+
+/* ── sitemap.xml ── */
+app.get('/sitemap.xml', (_req, res) => {
+  res.type('application/xml');
+  const base = 'https://grabscript.com';
+  const urls = ['/', '/about', '/contact', '/privacy', '/terms', '/faq', '/cookies', '/disclaimer'];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url><loc>${base}${u}</loc><changefreq>${u === '/' ? 'weekly' : 'monthly'}</changefreq><priority>${u === '/' ? '1.0' : '0.5'}</priority></url>`).join('\n')}
+</urlset>`;
+  res.send(xml);
+});
+
+/* ── robots.txt ── */
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *\nAllow: /\nSitemap: https://grabscript.com/sitemap.xml`);
+});
 
 /* ── main API route ── */
 const ACTOR_ID = 'karamelo~youtube-transcripts';
@@ -72,7 +99,7 @@ app.post('/api/transcript', async (req, res) => {
 
   const token = process.env.APIFY_TOKEN;
   if (!token || token === 'your_apify_token_here') {
-    return res.status(500).json({ error: 'APIFY_TOKEN is not configured on the server.' });
+    return res.status(500).json({ error: 'Server is not configured. Please contact support.' });
   }
 
   const videoId = extractVideoId(url.trim());
@@ -82,7 +109,7 @@ app.post('/api/transcript', async (req, res) => {
 
   const input = {
     urls: [`https://www.youtube.com/watch?v=${videoId}`],
-    outputFormat: timestamps ? 'captions_with_timestamps' : 'text_only',
+    outputFormat: timestamps ? 'textWithTimestamps' : 'captions',
     maxRetries: 3,
   };
 
@@ -98,8 +125,8 @@ app.post('/api/transcript', async (req, res) => {
 
     if (!apifyRes.ok) {
       const body = await apifyRes.text().catch(() => '');
-      if (!isProd) console.error('Apify error:', apifyRes.status, body);
-      return res.status(502).json({ error: `Apify returned an error (${apifyRes.status}). Check your token.` });
+      if (!isProd) console.error('Upstream error:', apifyRes.status, body);
+      return res.status(502).json({ error: 'Could not fetch transcript. Please try again.' });
     }
 
     const items = await apifyRes.json();
@@ -146,12 +173,12 @@ app.post('/api/transcript', async (req, res) => {
   }
 });
 
-/* ── 404 fallback → serve index.html (SPA) ── */
+/* ── SPA fallback ── */
 app.use((_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n  Scribely → http://localhost:${PORT}  [${isProd ? 'production' : 'development'}]\n`);
+  console.log(`\n  GrabScript → http://localhost:${PORT}  [${isProd ? 'production' : 'development'}]\n`);
 });
