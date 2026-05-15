@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7b6cf2"/>
+      <stop offset="100%" stop-color="#a17af0"/>
+    </linearGradient>
+  </defs>
+  <!-- Speech bubble body -->
+  <path d="M18 32c0-7.7 6.3-14 14-14h36c7.7 0 14 6.3 14 14v28c0 7.7-6.3 14-14 14H48l-14 14V74H32c-7.7 0-14-6.3-14-14V32z" stroke="url(#g)" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Text lines -->
+  <line x1="34" y1="42" x2="66" y2="42" stroke="url(#g)" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="34" y1="55" x2="58" y2="55" stroke="url(#g)" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Hand/grab from top -->
+  <path d="M56 18c-1-5 1-10 5-14" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M64 18c0-4 2-9 6-13" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M50 16c3-6 10-11 20-12" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M54 18h12" stroke="url(#g)" stroke-width="5" stroke-linecap="round"/>
+</svg>
