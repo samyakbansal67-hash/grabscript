@@ -234,7 +234,7 @@ function TopNav() {
           </motion.div>
           <span className="font-display text-[20px] tracking-tight italic">GrabScript</span>
         </a>
-        <nav className="hidden md:flex items-center gap-6 text-[13.5px] text-ink-700 mx-4">
+        <nav className="hidden sm:flex items-center gap-4 md:gap-6 text-[13.5px] text-ink-700 mx-4">
           {[{l:'Features',h:'#features'},{l:'How it works',h:'#how-it-works'},{l:'About',h:'/about'},{l:'Contact',h:'/contact'}].map(it=>(
             <a key={it.l} href={it.h} className="ul-draw whitespace-nowrap">{it.l}</a>
           ))}
@@ -287,7 +287,7 @@ function Hero({ onJump }) {
         </motion.p>
 
         <motion.div initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{delay:1.2,duration:0.7}}
-          className="mt-10 flex items-center justify-center gap-3">
+          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <motion.button onClick={onJump} whileHover={{y:-2}} whileTap={{scale:0.97}}
             className="relative overflow-hidden shine group rounded-full bg-ink-900 text-cream pl-6 pr-5 py-3.5 text-[15px] font-medium flex items-center gap-2 shadow-[0_18px_40px_-12px_rgba(40,20,80,0.45)]">
             <span className="relative z-10">Generate a transcript</span>
@@ -433,7 +433,7 @@ function TranscriptCard({ phase,setPhase,url,setUrl,results,setResults,anchorRef
                 <span className="h-2 w-2 rounded-full bg-emerald-300" />
                 <span className="ml-2 font-mono tracking-wider">grabscript / new transcript</span>
               </div>
-              <span className="font-mono opacity-70">⌘ + ⏎ to generate</span>
+              <span className="font-mono opacity-70 hidden sm:inline">⌘ + ⏎ to generate</span>
             </div>
 
             {/* URL input */}
@@ -447,8 +447,8 @@ function TranscriptCard({ phase,setPhase,url,setUrl,results,setResults,anchorRef
                 <input ref={inputRef} value={url} onChange={e=>setUrl(e.target.value)}
                   onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
                   onKeyDown={e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') btnRef.current?.click(); }}
-                  placeholder="youtube.com/watch?v=... or youtu.be/..."
-                  className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-ink-300" />
+                  placeholder="youtube.com/watch?v=..."
+                  className="flex-1 min-w-0 bg-transparent outline-none text-[15px] placeholder:text-ink-300" />
                 <AnimatePresence>
                   {url && (
                     <motion.button initial={{opacity:0,scale:0.6}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.6}}
@@ -800,7 +800,7 @@ function Ticker() {
 /* Features */
 function Features() {
   return (
-    <section id="features" className="relative px-6 py-24">
+    <section id="features" className="relative px-6 py-16 md:py-24">
       <div className="max-w-[1180px] mx-auto">
         <SectionHeader eyebrow="What's inside"
           title={<>Quietly, almost <em className="font-display italic">stubbornly</em> good.</>}
@@ -824,7 +824,7 @@ function FeatureCard({f,i}) {
   };
   return (
     <m2.div ref={ref} onMouseEnter={()=>setHot(true)} onMouseLeave={()=>setHot(false)} onMouseMove={onMove}
-      initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.3}}
+      initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.1}}
       transition={{delay:i*0.06,duration:0.7,ease:[0.22,1,0.36,1]}} whileHover={{y:-6}}
       className="relative rounded-3xl bg-white/80 backdrop-blur border border-paper p-7 overflow-hidden group"
       style={{'--mx':'50%','--my':'50%'}}>
@@ -854,7 +854,7 @@ function SectionHeader({eyebrow,title,sub}) {
         <span className="h-px w-8 bg-ink-300/60"/>{eyebrow}<span className="h-px w-8 bg-ink-300/60"/>
       </m2.div>
       <m2.h2 initial={{opacity:0,y:18}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.7,delay:0.05}}
-        className="font-display mt-5 text-[44px] md:text-[64px] leading-[1] tracking-[-0.02em] max-w-[820px] mx-auto">{title}</m2.h2>
+        className="font-display mt-5 text-[32px] md:text-[64px] leading-[1.05] tracking-[-0.02em] max-w-[820px] mx-auto">{title}</m2.h2>
       {sub && <m2.p initial={{opacity:0,y:14}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.7,delay:0.15}}
         className="mt-5 max-w-[540px] mx-auto text-ink-500 text-[16.5px] leading-[1.5]">{sub}</m2.p>}
     </div>
@@ -864,7 +864,7 @@ function SectionHeader({eyebrow,title,sub}) {
 /* How it works */
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative px-6 py-24">
+    <section id="how-it-works" className="relative px-6 py-16 md:py-24">
       <div className="max-w-[960px] mx-auto">
         <SectionHeader eyebrow="How it works"
           title={<>Three steps. <em className="font-display italic">No menus.</em></>}
@@ -893,7 +893,7 @@ function HowItWorks() {
 function Step({s,i}) {
   const Icon = window[s.icon];
   return (
-    <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.4}}
+    <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.1}}
       transition={{delay:i*0.2,duration:0.8,ease:[0.22,1,0.36,1]}} className="relative text-center">
       <m2.div animate={{y:[0,-6,0]}} transition={{duration:5+i*0.5,repeat:Infinity,ease:'easeInOut',delay:i*0.3}}
         className="mx-auto relative grid place-items-center h-[120px] w-[120px] rounded-[36px] bg-white/90 backdrop-blur border border-paper shadow-[0_24px_50px_-20px_rgba(80,60,180,0.3)]">
@@ -912,12 +912,12 @@ function Step({s,i}) {
 /* Quote band */
 function QuoteBand() {
   return (
-    <section className="px-6 py-24">
+    <section className="px-6 py-16 md:py-24">
       <div className="max-w-[860px] mx-auto text-center relative">
-        <m2.div initial={{opacity:0,scale:0.9}} whileInView={{opacity:1,scale:1}} viewport={{once:true}} transition={{duration:0.7}}
-          className="text-blush text-[80px] font-display leading-none">"</m2.div>
-        <m2.p initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.8,delay:0.1}}
-          className="font-display text-[34px] md:text-[48px] leading-[1.05] tracking-[-0.01em] -mt-8">
+        <m2.div initial={{opacity:0,scale:0.9}} whileInView={{opacity:1,scale:1}} viewport={{once:true,amount:0.1}} transition={{duration:0.7}}
+          className="text-blush text-[60px] md:text-[80px] font-display leading-none">"</m2.div>
+        <m2.p initial={{opacity:0,y:20}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.1}} transition={{duration:0.8,delay:0.1}}
+          className="font-display text-[26px] md:text-[48px] leading-[1.1] tracking-[-0.01em] -mt-6 md:-mt-8">
           Honestly the only transcript tool I've kept open in a tab for a whole quarter. It just <em className="italic">works</em>, and it's <em className="italic">kind</em> about it.
         </m2.p>
         <div className="mt-8 flex items-center justify-center gap-3">
@@ -935,9 +935,9 @@ function QuoteBand() {
 /* Final CTA */
 function FinalCTA({ onJump }) {
   return (
-    <section className="px-6 py-16">
-      <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{duration:0.8}}
-        className="relative max-w-[1100px] mx-auto rounded-[40px] overflow-hidden p-12 md:p-20 text-center"
+    <section className="px-6 py-12 md:py-16">
+      <m2.div initial={{opacity:0,y:30}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:0.1}} transition={{duration:0.8}}
+        className="relative max-w-[1100px] mx-auto rounded-[28px] md:rounded-[40px] overflow-hidden p-8 md:p-20 text-center"
         style={{background:'linear-gradient(135deg, #efe7ff 0%, #ffe1ec 50%, #e0eeff 100%)'}}>
         <m2.div className="absolute -left-20 -top-20 h-72 w-72 rounded-full"
           style={{background:'radial-gradient(circle, #b6a8ff, transparent 70%)',filter:'blur(40px)'}}
@@ -946,7 +946,7 @@ function FinalCTA({ onJump }) {
           style={{background:'radial-gradient(circle, #ffb3c8, transparent 70%)',filter:'blur(40px)'}}
           animate={{x:[0,-30,0],y:[0,-20,0]}} transition={{duration:16,repeat:Infinity,ease:'easeInOut'}} />
         <div className="relative">
-          <h2 className="font-display text-[44px] md:text-[80px] leading-[0.98] tracking-[-0.02em]">
+          <h2 className="font-display text-[32px] md:text-[80px] leading-[1] tracking-[-0.02em]">
             Now — try it on <em className="italic">your</em> video.
           </h2>
           <p className="mt-5 text-ink-500 text-[17px] max-w-[480px] mx-auto">
@@ -968,13 +968,13 @@ function Footer() {
   return (
     <footer className="relative px-6 pt-16 pb-10">
       <div className="max-w-[1180px] mx-auto">
-        <div className="flex flex-wrap gap-10 justify-between">
-          <div className="max-w-[300px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+          <div className="col-span-2 sm:col-span-1">
             <a href="/" className="flex items-center gap-2.5">
               <img src="/logo.svg" alt="GrabScript" className="h-9 w-9" />
               <span className="font-display text-[26px] italic">GrabScript</span>
             </a>
-            <p className="mt-4 text-sm text-ink-500 leading-[1.55]">A clean, fast transcript tool. Supports English, Hindi, and more. Free forever.</p>
+            <p className="mt-4 text-sm text-ink-500 leading-[1.55] max-w-[280px]">A clean, fast transcript tool. Supports English, Hindi, and more. Free forever.</p>
           </div>
           {[
             { t:'Product', items:[{l:'Features',h:'#features'},{l:'How it works',h:'#how-it-works'}] },
@@ -983,22 +983,19 @@ function Footer() {
           ].map(col=>(
             <div key={col.t}>
               <div className="text-[11px] uppercase tracking-[0.18em] text-ink-300">{col.t}</div>
-              <ul className="mt-4 space-y-2.5 text-[14.5px] text-ink-700">
+              <ul className="mt-3 space-y-2 text-[14px] text-ink-700">
                 {col.items.map(it=><li key={it.l}><a href={it.h} className="ul-draw">{it.l}</a></li>)}
               </ul>
             </div>
           ))}
         </div>
-        <div className="mt-14 pt-6 border-t border-paper flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-10 pt-5 border-t border-paper flex flex-wrap items-center justify-between gap-4">
           <div className="text-[12.5px] text-ink-500">© {new Date().getFullYear()} GrabScript · free forever</div>
-          <div className="flex items-center gap-4 text-[12.5px] text-ink-500">
-            <a href="/privacy" className="ul-draw">Privacy</a>
-            <a href="/terms" className="ul-draw">Terms</a>
-          </div>
+          <a href="mailto:s.bansaluptowork@gmail.com" className="text-[12.5px] text-ink-500 ul-draw">s.bansaluptowork@gmail.com</a>
         </div>
-        <div className="mt-10 overflow-hidden">
+        <div className="mt-6 overflow-hidden">
           <div className="font-display italic leading-[0.85] tracking-[-0.03em] text-center select-none"
-            style={{fontSize:'clamp(80px,22vw,360px)',background:'linear-gradient(180deg,rgba(26,21,48,0.16) 0%,rgba(26,21,48,0) 90%)',WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}}>
+            style={{fontSize:'clamp(60px,18vw,280px)',background:'linear-gradient(180deg,rgba(26,21,48,0.12) 0%,rgba(26,21,48,0) 90%)',WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent'}}>
             GrabScript
           </div>
         </div>
